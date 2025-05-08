@@ -5,6 +5,7 @@
 
 from enum import Enum
 from typing import Final
+from numpy.typing import NDArray
 import utils
 import numpy as np
 import pigpio
@@ -63,13 +64,13 @@ class MotorGpio(Enum):
 
     # return to [LF, RF, LB, RB]
     @classmethod
-    def ToArray(cls) -> np.array:
+    def ToArray(cls) -> NDArray[np.int32]:
         return np.array([
             [MotorGpio.LeftFrontIn3.value  , MotorGpio.LeftFrontIn4.value  ],  # Left Front (LF)
             [MotorGpio.RightFrontIn1.value , MotorGpio.RightFrontIn2.value ],  # Right Front (RF)
             [MotorGpio.LeftBehindIn3.value , MotorGpio.LeftBehindIn4.value ],  # Left Back (LB)
             [MotorGpio.RightBehindIn1.value, MotorGpio.RightBehindIn2.value]   # Right Back (RB)
-        ])
+        ],  dtype=np.int32)
 
 
 """
@@ -80,7 +81,7 @@ class MotorGpio(Enum):
     Order of wheels: [Front-Left, Front-Right, Back-Left, Back-Right]
     reference: memo/movements.png
 """
-DIRECTIONS: Final[np.array] = np.array(
+DIRECTIONS: Final[NDArray[np.int32]] = np.array(
    #[LF, RF, LB, RB]
 
     # forward,
@@ -104,7 +105,9 @@ DIRECTIONS: Final[np.array] = np.array(
     #turn left
     [-1,  1, -1,  1], 
     #stop
-    [ 0,  0,  0,  0] 
+    [ 0,  0,  0,  0],
+
+    dtype=np.int32
 )
 
 
@@ -139,12 +142,12 @@ class WheelController:
                 self.raspberryPi_.set_PWM_frequency(pin.value, FREQUENCY)
                 self.raspberryPi_.set_PWM_range(pin.value, PWM_RANGE)
 
-        except Exception as ex:
-            print(f"Failed to setup frequency/range at pin {pin.name} : {ex} ")
-            raise
+        except pigpio.error as ex:
+            raise RuntimeError(f"Failed to setup frequency/range at pin {pin.name}: {ex}") from ex
 
 
-    def __SetMotorDirection(self, pwm: int, direction: np.array) -> None:
+
+    def __SetMotorDirection(self, pwm: int, direction: NDArray[np.int32]) -> None:
         for idx, (pin1, pin2) in enumerate(MotorGpio.ToArray()):
             dor: int = direction[idx]
 
