@@ -25,10 +25,10 @@ import pigpio
 
  pin  | GPIO | purpose
 ---------------------
- TBD  | TBD  | Right motor IN1
- TBD  | TBD  | Right motor IN2
- TBD  | TBD  | Left motor  IN3
- TBD  | TBD  | Left motor  IN4  
+  33  |  13  | Right motor IN1
+  32  |  12  | Right motor IN2
+  31  |   6  | Left motor  IN3
+  29  |   5  | Left motor  IN4  
 
 
 wheel: MecanumWheel
@@ -53,13 +53,12 @@ class MotorGpio(Enum):
     LeftFrontIn3  = 23
     LeftFrontIn4  = 22
 
-# behind motor: Unimplemented
     #RB
-    RightBehindIn1 = -1
-    RightBehindIn2 = -1
+    RightBehindIn1 = 13
+    RightBehindIn2 = 12
     #LB
-    LeftBehindIn3  = -1
-    LeftBehindIn4  = -1
+    LeftBehindIn3  = 6
+    LeftBehindIn4  = 5
 
 
     # return to [LF, RF, LB, RB]
@@ -81,33 +80,33 @@ class MotorGpio(Enum):
     Order of wheels: [Front-Left, Front-Right, Back-Left, Back-Right]
     reference: memo/movements.png
 """
-DIRECTIONS: Final[NDArray[np.int32]] = np.array(
+DIRECTIONS: Final[NDArray[np.int32]] = np.array([
    #[LF, RF, LB, RB]
 
     # forward,
-    [ 1,  1,  1,  1], 
+        [ 1,  1,  1,  1], 
     # backward
-    [-1, -1, -1, -1], 
+        [-1, -1, -1, -1], 
     #right,
-    [ 1, -1, -1,  1], 
+        [ 1, -1, -1,  1], 
      #left,
-    [-1,  1,  1, -1],
+        [-1,  1,  1, -1],
     #right forward
-    [ 1,  0,  0,  1], 
+        [ 1,  0,  0,  1], 
     #left forward
-    [ 0,  1,  1,  0], 
+        [ 0,  1,  1,  0], 
     #right backward 
-    [ 0, -1, -1,  0], 
+        [ 0, -1, -1,  0], 
     #left backward
-    [-1,  0,  0, -1], 
+        [-1,  0,  0, -1], 
     #turn right
-    [ 1, -1,  1, -1], 
+        [ 1, -1,  1, -1], 
     #turn left
-    [-1,  1, -1,  1], 
+        [-1,  1, -1,  1], 
     #stop
-    [ 0,  0,  0,  0],
+        [ 0,  0,  0,  0],
 
-    dtype=np.int32
+    ], dtype=np.int32
 )
 
 
@@ -123,10 +122,8 @@ class WheelController:
     def __Setup(self) -> None:
         self.__SetGpioPinAsOutput()
         self.__InitPwmFrequencyAndRange()
-
-    """
-        Sets all GPIO pins defined in MotorGpio as output,
-    """
+        self.__SetAllPinLow()
+ 
     def __SetGpioPinAsOutput(self) -> None:
         for gpio in MotorGpio:
             try:
@@ -134,7 +131,11 @@ class WheelController:
             except Exception as ex:
                 print(f"Failed to setup GPIO {gpio.name}: {ex}")
                 raise
-    
+
+    def __SetAllPinLow(self) -> None:
+        for _, (pin1, pin2) in enumerate(MotorGpio.ToArray()):
+            self.raspberryPi_.write(pin1, LOW)
+            self.raspberryPi_.write(pin2, LOW)
 
     def __InitPwmFrequencyAndRange(self):
         try:
@@ -211,6 +212,7 @@ class WheelController:
         pwm: int = utils.ToPwm(speed)
         self.__SetMotorDirection(pwm, DIRECTIONS[8])        
 
+ 
     def TurnLeft(self, speed: float) -> None:
         pwm: int = utils.ToPwm(speed)
         self.__SetMotorDirection(pwm, DIRECTIONS[9])
