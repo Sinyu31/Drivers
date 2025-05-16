@@ -134,8 +134,10 @@ class WheelController:
 
     def __SetAllPinLow(self) -> None:
         for _, (pin1, pin2) in enumerate(MotorGpio.ToArray()):
-            self.raspberryPi_.write(pin1, LOW)
-            self.raspberryPi_.write(pin2, LOW)
+            
+                self.raspberryPi_.set_PWM_dutycycle(pin1, 0)
+                self.raspberryPi_.set_PWM_dutycycle(pin2, 0)
+            
 
     def __InitPwmFrequencyAndRange(self):
         try:
@@ -153,23 +155,14 @@ class WheelController:
             dor: int = direction[idx]
 
             if dor == 1:
-                self.raspberryPi_.write(pin1, HIGH)
-                self.raspberryPi_.write(pin2, LOW)
-
                 self.raspberryPi_.set_PWM_dutycycle(pin1, pwm)
                 self.raspberryPi_.set_PWM_dutycycle(pin2, 0)
 
             elif dor == -1:
-                self.raspberryPi_.write(pin1, LOW)
-                self.raspberryPi_.write(pin2, HIGH)
-                
                 self.raspberryPi_.set_PWM_dutycycle(pin1, 0)
                 self.raspberryPi_.set_PWM_dutycycle(pin2, pwm)
 
             else:
-                self.raspberryPi_.write(pin1, LOW)
-                self.raspberryPi_.write(pin2, LOW)
-            
                 self.raspberryPi_.set_PWM_dutycycle(pin1, 0)
                 self.raspberryPi_.set_PWM_dutycycle(pin2, 0)
 
