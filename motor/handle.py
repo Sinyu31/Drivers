@@ -2,7 +2,6 @@ from controller import WheelController
 from time import sleep
 import asyncio
 
-
 def main() -> None:
     pass
 
